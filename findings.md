@@ -57,9 +57,11 @@ From a development standpoint this option is **feasible** (tested in Chrome and 
 - Chrome requires a page redirect after form submission before it will prompt the user to save their credentials. This shouldn't be a problem but nice to know. More information on this can be found [here](https://stackoverflow.com/questions/2382329/how-can-i-get-browser-to-prompt-to-save-password).
 - This approach requires punters to configure a subdomain for each bookie.
 
-## Next steps
+## Implementing Option 2
 
-- Talk to Nick D around how the subdomains will work
-
-deployed in 10 different subdomain aliases that all point to one s3 bucket with the asset in it.
-the FE grabs the subdomain and uses that to style
+- Vue.js app build and stored in `quickbet-ui` Amazon S3 Bucket.
+- Establish multiple subdomains (Amazon Route 53) in the format `[BOOKIENAME].quickbet.puntapi.com`
+    - Ideally will use `punters.com.au` domain but it's SSL certificate is not handled via AWS which makes it tricky
+- There is a restriction around Route 53 aliases pointing to S3 Buckets in that they must have an identical name (e.g. both called `sportsbet.quickbet.punters.com.au`). To get around this we need to put Cloudfront on top of the S3 bucket.
+- Set up Cloudfront to point to S3 bucket's `index.html` with a 404 redirection to `index.html` (so an SPA works)
+- Enter all required subdomains as Alternate Domain Names (CNAMEs) in Cloudfront.
