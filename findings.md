@@ -50,18 +50,19 @@ This option involves hosting the login forms for quickbet on multiple subdomains
 
 ### Verdict
 
-From a development standpoint this option is **feasible** (tested in Chrome and Firefox), however there are a few caveats:
+This option is **feasible** (tested in Chrome, Firefox and Safari), however there are a few caveats:
 
 - When the page is served over `http` (as apposed to `https`), both browsers deviate from the [standard behaviour](#standard-autofill-behaviour) and will not automatically autofill the inputs for the user. The user will still be prompted to save their password when submitting it for the first time and can still access autocomplete functionality by either clicking or typing in the fields and selecting their credentials from a dropdown. This should not be a problem as we should be using `https` anyway.
 - Even when served via `https`, Chrome still behaves as described in the above point when the content is displayed in an `<iframe>` (as is the proposed solution).
-- Chrome requires a page redirect after form submission before it will prompt the user to save their credentials. This shouldn't be a problem but nice to know. More information on this can be found [here](https://stackoverflow.com/questions/2382329/how-can-i-get-browser-to-prompt-to-save-password).
+- Chrome requires a page redirect after form submission before it will prompt the user to save their credentials. This shouldn't be a problem but nice to know. More information on this can be found [here](https://stackoverflow.com/questions/2382329/how-can-i-get-browser-to-prompt-to-save-password) and [here](https://stackoverflow.com/questions/21191336/getting-chrome-to-prompt-to-save-password-when-using-ajax-to-login).
+- Safari behaves in a similar way to Chrome however it won't prompt if `preventDefault` is called on form submit.
 - This approach requires punters to configure a subdomain for each bookie.
 
 ## Implementing Option 2
 
 - Vue.js app build and stored in `quickbet-ui` Amazon S3 Bucket.
 - Establish multiple subdomains (Amazon Route 53) in the format `[BOOKIENAME].quickbet.puntapi.com`
-    - Ideally will use `punters.com.au` domain but it's SSL certificate is not handled via AWS which makes it tricky
+    - Ideally will use `punters.com.au` domain but it's SSL certificate is not handled via AWS which makes it easier to use `puntapi.com` for the poc
 - There is a restriction around Route 53 aliases pointing to S3 Buckets in that they must have an identical name (e.g. both called `sportsbet.quickbet.punters.com.au`). To get around this we need to put Cloudfront on top of the S3 bucket.
 - Set up Cloudfront to point to S3 bucket's `index.html` with a 404 redirection to `index.html` (so an SPA works)
 - Enter all required subdomains as Alternate Domain Names (CNAMEs) in Cloudfront.
