@@ -1,30 +1,65 @@
-## Quickbet poc
+# Quickbet poc
 
-Autocomplete option
+## Desired outcome
 
+Allow users to store their username/passwords in their browsers password manager on a per-bookie basis to leverage browsers username/password autofill capabilities. This will ultimately increase user experience by decreasing the time it takes for a user to log into their chosen bookie.
 
-This no work:
+### Standard autofill behaviour
+
+The standard browser autofill behaviour for username/password fields is as follows:
+
+- User lands on login page with no saved credentials
+- User fills in username and password and submits form
+- Browser prompts the user (some kind of popup) if they would like to save their details for this site
+- If user accepts, the browser will automatically populate the username and password fields on subsequent visits to the login page 
+
+## Option 1 - Using autocomplete tokens
+
+This option involved using [autocomplete section tokens](https://wiki.whatwg.org/wiki/Autocomplete_Types#Section_tokens) so that the browser would be able to differentiate login forms at the same url. 
+
+Example:
 
 ```html
 <form autocomplete="on">
-  <label for="uname"><b>Username</b></label>
-  <input type="text" placeholder="Enter Username" name="uname" autocomplete="username-one">
+  <p>Bet365 Login</p>
+  <label for="uname-bet365"><b>Username</b></label>
+  <input type="text" placeholder="Enter Username" name="uname-bet365" autocomplete="uname-bet365">
   
-  <label for="psw"><b>Password</b></label>
-  <input type="password" placeholder="Enter Password" name="psw" autocomplete="password-one">
+  <label for="pword-bet365"><b>Password</b></label>
+  <input type="password" placeholder="Enter Password" name="pword-bet365" autocomplete="pword-bet365">
   <button type="submit">Login</button>
 </form>  
 <form autocomplete="on">
-  <label for="uname2"><b>Username</b></label>
-  <input type="text" placeholder="Enter Username" name="uname2" autocomplete="username-two">
+  <p>Sportsbet Login</p>
+  <label for="uname-sb"><b>Username</b></label>
+  <input type="text" placeholder="Enter Username" name="uname-sb" autocomplete="uname-sb">
   
-  <label for="psw2"><b>Password</b></label>
-  <input type="password" placeholder="Enter Password" name="psw2" autocomplete="password-two">
+  <label for="pword-sb"><b>Password</b></label>
+  <input type="password" placeholder="Enter Password" name="pword-sb" autocomplete="pword-sb">
   <button type="submit">Login</button>
 </form>
 ```
 
-subdomain works fine
+### Verdict
 
-when served up via an iframe:
-- both chrome and firefox remembers passwords correctly for separate subdomains, but doesn't fully auto complete. User needs to click on user/pass inputs (or start typing) and select their account from drop down
+This approach is **not feasible**. When tested in both Chrome and Firefox, the above approach did not work to spec. The browser didn't differentiate between the two forms (e.g. If the user had a Sportsbet username/password saved, the Bet365 login form would also be autofilled with the Sportsbet credentials)
+
+## Option 2 - Serving login forms on different subdomains via iframe
+
+This option involves hosting the login forms for quickbet on multiple subdomains (e.g. `bet365.quickbet.com.au`, `sportsbet.quickbet.com.au`) and serving the form to the user via an `<iframe>`. As the browser saves password on a domain basis, this would allow user's login experience to be less cumbersome as they can use browsers autofill features to speed up the process.
+
+### Verdict
+
+From a development standpoint this option is **feasible** (tested in Chrome and Firefox), however there are a few caveats:
+
+- When the page is served over `http` (as apposed to `https`), both browsers deviate from the [standard behaviour](#standard-autofill-behaviour) and will not automatically autofill the inputs for the user. The user will still be prompted to save their password when submitting it for the first time and can still access autocomplete functionality by either clicking or typing in the fields and selecting their credentials from a dropdown. This should not be a problem as we should be using `https` anyway.
+- Even when served via `https`, Chrome still behaves as described in the above point when the content is displayed in an `<iframe>` (as is the proposed solution).
+- Chrome requires a page redirect after form submission before it will prompt the user to save their credentials. This shouldn't be a problem but nice to know. More information on this can be found [here](https://stackoverflow.com/questions/2382329/how-can-i-get-browser-to-prompt-to-save-password).
+- This approach requires punters to configure a subdomain for each bookie.
+
+## Next steps
+
+- Talk to Nick D around how the subdomains will work
+
+deployed in 10 different subdomain aliases that all point to one s3 bucket with the asset in it.
+the FE grabs the subdomain and uses that to style
